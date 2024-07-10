@@ -1,5 +1,7 @@
 from celery import shared_task
 from celery_singleton import Singleton
+from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
@@ -16,6 +18,7 @@ def set_price(subscription_id):
 
         subscription.price = subscription.annotated_price
         subscription.save()
+    cache.delete(settings.PRICE_CACHE_NAME)
 
 
 @shared_task(base=Singleton)
@@ -27,3 +30,4 @@ def set_last_change_time(subscription_id):
 
         subscription.last_change_time = timezone.now()
         subscription.save()
+    cache.delete(settings.PRICE_CACHE_NAME)
