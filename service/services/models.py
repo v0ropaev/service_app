@@ -21,7 +21,7 @@ class Service(models.Model):
         if self.__full_price != self.full_price and self.pk is not None:
             for subscription in self.subscriptions.all():
                 set_price.delay(subscription.id)
-                set_last_change_time(subscription.id)
+                set_last_change_time.delay(subscription.id)
 
         return super().save(*args, **kwargs)
 
@@ -47,7 +47,7 @@ class Plan(models.Model):
         if self.__discount_percent != self.discount_percent and self.pk is not None:
             for subscription in self.subscriptions.all():
                 set_price.delay(subscription.id)
-                set_last_change_time(subscription.id)
+                set_last_change_time.delay(subscription.id)
 
         return super().save(*args, **kwargs)
 
