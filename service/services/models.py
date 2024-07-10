@@ -1,8 +1,10 @@
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.db.models.signals import post_delete
 from django.utils import timezone
 
 from clients.models import Client
+from .receivers import delete_cache_total_sum
 from .tasks import set_price, set_last_change_time
 
 
@@ -61,3 +63,13 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f'Subscription {self.pk} | {self.service.name}'
+
+    def save(self, *args, **kwargs):
+        creating = not bool(self.id)
+        saved_instance = super().save(*args, **kwargs)
+        if creating:
+            set_price.delay(self.id)
+        return saved_instance
+
+
+post_delete.connect(delete_cache_total_sum, sender=Subscription)
