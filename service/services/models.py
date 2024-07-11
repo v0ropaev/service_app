@@ -9,6 +9,18 @@ from .tasks import set_price, set_last_change_time
 
 
 class Service(models.Model):
+    """
+    Модель, представляющая услугу.
+
+    Attributes:
+        name (str): Название услуги.
+        full_price (int): Полная цена услуги.
+
+    Methods:
+        save(*args, **kwargs): Переопределенный метод сохранения, который запускает
+                               асинхронные задачи для обновления подписок.
+    """
+
     name = models.CharField(max_length=50)
     full_price = models.PositiveIntegerField()
 
@@ -20,6 +32,9 @@ class Service(models.Model):
         self.__full_price = self.full_price
 
     def save(self, *args, **kwargs):
+        """
+        Переопределенный метод сохранения для запуска асинхронных задач при изменении цены услуги.
+        """
         if self.__full_price != self.full_price and self.pk is not None:
             for subscription in self.subscriptions.all():
                 set_price.delay(subscription.id)
@@ -29,6 +44,19 @@ class Service(models.Model):
 
 
 class Plan(models.Model):
+    """
+    Модель, представляющая план подписки.
+
+    Attributes:
+        PLAN_TYPES (tuple): Кортеж с вариантами типов плана.
+        plan_type (str): Тип плана (например, 'full', 'student', 'discount').
+        discount_percent (int): Процент скидки для плана.
+
+    Methods:
+        save(*args, **kwargs): Переопределенный метод сохранения, который запускает
+                               асинхронные задачи для обновления подписок.
+    """
+
     PLAN_TYPES = (
         ('full', 'Full'),
         ('student', 'Student'),
@@ -46,6 +74,9 @@ class Plan(models.Model):
         self.__discount_percent = self.discount_percent
 
     def save(self, *args, **kwargs):
+        """
+        Переопределенный метод сохранения для запуска асинхронных задач при изменении скидки плана.
+        """
         if self.__discount_percent != self.discount_percent and self.pk is not None:
             for subscription in self.subscriptions.all():
                 set_price.delay(subscription.id)
@@ -55,6 +86,24 @@ class Plan(models.Model):
 
 
 class Subscription(models.Model):
+    """
+    Модель, представляющая подписку клиента на услугу.
+
+    Attributes:
+        client (Client): Внешний ключ на модель клиента.
+        service (Service): Внешний ключ на модель услуги.
+        plan (Plan): Внешний ключ на модель плана подписки.
+        price (int): Цена подписки.
+        last_change_time (datetime): Время последнего изменения подписки.
+
+    Meta:
+        indexes (list): Список индексов для ускорения запросов по клиенту и услуге.
+
+    Methods:
+        save(*args, **kwargs): Переопределенный метод сохранения, который запускает
+                               асинхронные задачи при создании новой подписки.
+    """
+
     client = models.ForeignKey(Client, related_name='subscriptions', on_delete=models.PROTECT)
     service = models.ForeignKey(Service, related_name='subscriptions', on_delete=models.PROTECT)
     plan = models.ForeignKey(Plan, related_name='subscriptions', on_delete=models.PROTECT)
@@ -70,6 +119,9 @@ class Subscription(models.Model):
         return f'Subscription {self.pk} | {self.service.name}'
 
     def save(self, *args, **kwargs):
+        """
+        Переопределенный метод сохранения для запуска асинхронной задачи при создании подписки.
+        """
         creating = not bool(self.id)
         saved_instance = super().save(*args, **kwargs)
         if creating:

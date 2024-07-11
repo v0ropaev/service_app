@@ -1,3 +1,15 @@
+"""
+Модуль с тестами сериализаторов приложения services.
+
+Этот модуль содержит юнит-тесты для проверки правильности работы сериализаторов
+PlanSerializer и SubscriptionSerializer.
+
+Тесты:
+- test_plan_serializer: Проверяет сериализацию объекта Plan в ожидаемый словарь.
+- test_subscription_serializer: Проверяет сериализацию объекта Subscription в ожидаемый словарь.
+- test_subscription_serializer_validation_error: Проверяет обработку ошибок валидации для SubscriptionSerializer.
+"""
+
 from django.db.models import Prefetch
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -11,6 +23,11 @@ from services.serializers import PlanSerializer, SubscriptionSerializer
 
 class SerializerTestCase(TestCase):
     def setUp(self):
+        """
+        Настройка данных для тестов.
+
+        Создает пользователя, клиента, сервис и план подписки для использования в тестах.
+        """
         self.user = User.objects.create_user(username='testuser', email='testuser@example.com', password='password123')
         self.client = Client.objects.create(user=self.user, company_name='Test Company')
 
@@ -20,6 +37,11 @@ class SerializerTestCase(TestCase):
         self.subscription = Subscription.objects.create(client=self.client, service=self.service, plan=self.plan)
 
     def test_plan_serializer(self):
+        """
+        Тест для PlanSerializer.
+
+        Проверяет, что PlanSerializer правильно сериализует объект Plan в ожидаемый словарь.
+        """
         serializer = PlanSerializer(self.plan)
         expected_data = {
             'id': self.plan.id,
@@ -29,6 +51,11 @@ class SerializerTestCase(TestCase):
         self.assertEqual(serializer.data, expected_data)
 
     def test_subscription_serializer(self):
+        """
+        Тест для SubscriptionSerializer.
+
+        Проверяет, что SubscriptionSerializer правильно сериализует объект Subscription в ожидаемый словарь.
+        """
         subscriptions = Subscription.objects.all().prefetch_related(
             'plan',
             Prefetch('client',
@@ -49,12 +76,14 @@ class SerializerTestCase(TestCase):
             'client_name': 'Test Company',
             'email': 'testuser@example.com'
         }]
-        print(data)
-        print('----------------')
-        print(expected_data)
         self.assertEqual(expected_data, data)
 
     def test_subscription_serializer_validation_error(self):
+        """
+        Тест для обработки ошибок валидации SubscriptionSerializer.
+
+        Проверяет, что SubscriptionSerializer корректно обрабатывает недопустимые данные и выбрасывает ошибки валидации.
+        """
         invalid_data = {
             'plan': None,
             'client_name': 'Non Existent Client',

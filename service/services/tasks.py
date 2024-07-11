@@ -1,3 +1,13 @@
+"""
+Модуль для Celery задач.
+
+Этот модуль содержит задачи Celery для обработки асинхронных операций над подписками.
+
+Задачи:
+- set_price: Обновляет цену подписки и очищает кэш суммарной стоимости.
+- set_last_change_time: Устанавливает время последнего изменения подписки и очищает кэш суммарной стоимости.
+"""
+
 from celery import shared_task
 from celery_singleton import Singleton
 from django.conf import settings
@@ -9,6 +19,12 @@ from django.utils import timezone
 
 @shared_task(base=Singleton)
 def set_price(subscription_id):
+    """
+    Обновляет цену подписки и очищает кэш суммарной стоимости.
+
+    Args:
+        subscription_id (int): Идентификатор подписки.
+    """
     from services.models import Subscription
 
     with transaction.atomic():
@@ -23,6 +39,12 @@ def set_price(subscription_id):
 
 @shared_task(base=Singleton)
 def set_last_change_time(subscription_id):
+    """
+    Устанавливает время последнего изменения подписки и очищает кэш суммарной стоимости.
+
+    Args:
+        subscription_id (int): Идентификатор подписки.
+    """
     from services.models import Subscription
 
     with transaction.atomic():
