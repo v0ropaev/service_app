@@ -61,6 +61,11 @@ class Subscription(models.Model):
     price = models.PositiveIntegerField(default=0)
     last_change_time = models.DateTimeField(default=timezone.now)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['client', 'service']),
+        ]
+
     def __str__(self):
         return f'Subscription {self.pk} | {self.service.name}'
 
